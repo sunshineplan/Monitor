@@ -53,7 +53,7 @@ class Monitor:
             data = {'riskLevel': 2, 'isSelling': 1, 'orderType': 2,
                     'investTerm': 4, 'TemplateCode': 9901, 'WEB_CHN': 'NH'}
             limit = requests.post('https://e.nbcb.com.cn/perbank/HB06201_noSessionFinancialProds.do',
-                                     params=data, headers=headers).json()['cd']['iProdUseLimits']
+                                  params=data, headers=headers).json()['cd']['iProdUseLimits']
             for i in limit:
                 if i['prodId'] == '1004':
                     self.nbcb_1004 = self.markup(
@@ -68,17 +68,16 @@ class Monitor:
 
     async def spdb(self, test=False):
         if test or self.spdb_flag:
+            headers = {'Cookie': self.spdb_cookies}
             data = {'FinanceNo': '2301187111',
                     'nearDate': 'nearOneWeek', 'Hierarchy': '2301187111-A'}
-            headers = {'Cookie': self.spdb_cookies}
-            response = requests.post(
-                'https://ebank.spdb.com.cn/msper-web-finance/QueryAvlLimitAmnt.json', json=data, headers=headers)
-            limit = response.json()['CanUseQuota'].replace(',', '')
-            response = requests.post(
-                'https://ebank.spdb.com.cn/msper-web-finance/QueryFinanceIncomeByAjax.json', json=data, headers=headers)
-            income = loads(response.json()['dataList'])[-1]
+            income = loads(requests.post('https://ebank.spdb.com.cn/msper-web-finance/QueryFinanceIncomeByAjax.json',
+                                         json=data, headers=headers).json()['dataList'])[-1]
+            limit = requests.post('https://ebank.spdb.com.cn/msper-web-finance/QueryAvlLimitAmnt.json',
+                                  json=data, headers=headers).json()['CanUseQuota'].replace(',', '')
             if not test:
-                self.spdb_2301187111 = self.markup(self.spdb_2301187111, (f'天添盈增利1号({income})', limit))
+                self.spdb_2301187111 = self.markup(
+                    self.spdb_2301187111, (f'天添盈增利1号({income}%)', limit))
                 await asyncio.sleep(self.spdb_interval)
                 asyncio.ensure_future(self.spdb())
 
