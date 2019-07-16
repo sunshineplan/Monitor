@@ -9,6 +9,7 @@ from json import loads
 from logging.handlers import RotatingFileHandler
 
 import requests
+from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -42,17 +43,24 @@ class Monitor:
 
     async def nbcb(self):
         try:
+            headers = {'user-agent': self.agent}
+            data = {'prodId': 1004, 'replyPage': 1}
+            income_1004 = BeautifulSoup(requests.post('https://mybank.nbcb.com.cn/doorbank/queryNav.do',
+                                                      params=data, headers=headers).text, 'html.parser').find('td', class_='td4').text
+            data = {'prodId': 1005, 'replyPage': 1}
+            income_1005 = BeautifulSoup(requests.post('https://mybank.nbcb.com.cn/doorbank/queryNav.do',
+                                                      params=data, headers=headers).text, 'html.parser').find('td', class_='td4').text
             data = {'riskLevel': 2, 'isSelling': 1, 'orderType': 2,
                     'investTerm': 4, 'TemplateCode': 9901, 'WEB_CHN': 'NH'}
-            response = requests.get('https://e.nbcb.com.cn/perbank/HB06201_noSessionFinancialProds.do',
-                                    params=data, headers={'user-agent': self.agent})
-            for i in response.json()['cd']['iProdUseLimits']:
+            limit = requests.post('https://e.nbcb.com.cn/perbank/HB06201_noSessionFinancialProds.do',
+                                     params=data, headers=headers).json()['cd']['iProdUseLimits']
+            for i in limit:
                 if i['prodId'] == '1004':
                     self.nbcb_1004 = self.markup(
-                        self.nbcb_1004, ('天利鑫B', i['totUseLimit']))
+                        self.nbcb_1004, (f'天利鑫B({income_1004})', i['totUseLimit']))
                 if i['prodId'] == '1005':
                     self.nbcb_1005 = self.markup(
-                        self.nbcb_1005, ('如意鑫A', i['totUseLimit']))
+                        self.nbcb_1005, (f'如意鑫A({income_1005})', i['totUseLimit']))
         except:
             self.nbcb_1004 = self.nbcb_1005 = None
         await asyncio.sleep(self.nbcb_interval)
