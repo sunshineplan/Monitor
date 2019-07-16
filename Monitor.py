@@ -5,6 +5,7 @@ import asyncio
 import configparser
 import logging
 from datetime import datetime
+from json import loads
 from logging.handlers import RotatingFileHandler
 
 import requests
@@ -61,12 +62,15 @@ class Monitor:
         if test or self.spdb_flag:
             data = {'FinanceNo': '2301187111',
                     'nearDate': 'nearOneWeek', 'Hierarchy': '2301187111-A'}
+            headers = {'Cookie': self.spdb_cookies}
             response = requests.post(
-                'https://ebank.spdb.com.cn/msper-web-finance/QueryAvlLimitAmnt.json', json=data, headers={'Cookie': self.spdb_cookies})
-            jsonresponse = response.json()
+                'https://ebank.spdb.com.cn/msper-web-finance/QueryAvlLimitAmnt.json', json=data, headers=headers)
+            limit = response.json()['CanUseQuota'].replace(',', '')
+            response = requests.post(
+                'https://ebank.spdb.com.cn/msper-web-finance/QueryFinanceIncomeByAjax.json', json=data, headers=headers)
+            income = loads(response.json()['dataList'])[-1]
             if not test:
-                self.spdb_2301187111 = self.markup(
-                    self.spdb_2301187111, ('天添盈增利1号', jsonresponse['CanUseQuota'].replace(',', '')))
+                self.spdb_2301187111 = self.markup(self.spdb_2301187111, (f'天添盈增利1号({income})', limit))
                 await asyncio.sleep(self.spdb_interval)
                 asyncio.ensure_future(self.spdb())
 
@@ -103,7 +107,7 @@ class Monitor:
                 contents.append('{}-{}'.format(i[0], i[1][:-1]))
         output = ''
         for i in contents:
-            output += f'{i:<18}'
+            output += f'{i:<25}'
         return output
 
     async def record(self):
