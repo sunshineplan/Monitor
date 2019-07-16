@@ -4,6 +4,7 @@
 import asyncio
 import configparser
 import logging
+import os
 from datetime import datetime
 from json import loads
 from logging.handlers import RotatingFileHandler
@@ -29,7 +30,8 @@ class Monitor:
 
     def parserconfig(self):
         config = configparser.ConfigParser()
-        config.read('Monitor.ini')
+        config.read(os.path.join(os.path.abspath(
+            os.path.dirname(__file__)), 'Monitor.ini'))
         self.log_interval = config.getint(
             'DEFAULT', 'log_interval', fallback=15)
         self.config_interval = config.getint(
