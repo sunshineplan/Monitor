@@ -116,7 +116,7 @@ class Monitor:
                 contents.append('{}-{}'.format(i[0], i[1][:-1]))
         output = ''
         for i in contents:
-            output += f'{i:<25}'
+            output += f'{i:<28}'
         return output
 
     async def record(self):
