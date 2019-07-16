@@ -14,8 +14,8 @@ from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-handler = RotatingFileHandler(
-    'Monitor.log', maxBytes=1*1024*1024, backupCount=10)
+handler = RotatingFileHandler(os.path.join(os.path.abspath(os.path.dirname(
+    __file__)), 'Monitor.log'), maxBytes=1*1024*1024, backupCount=10)
 handler.setFormatter(logging.Formatter('%(asctime)s  %(message)s'))
 logger.addHandler(handler)
 
