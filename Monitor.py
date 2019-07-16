@@ -59,7 +59,8 @@ class Monitor:
 
     async def spdb(self, test=False):
         if test or self.spdb_flag:
-            data = {'FinanceNo': '2301187111'}
+            data = {'FinanceNo': '2301187111',
+                    'nearDate': 'nearOneWeek', 'Hierarchy': '2301187111-A'}
             response = requests.post(
                 'https://ebank.spdb.com.cn/msper-web-finance/QueryAvlLimitAmnt.json', json=data, headers={'Cookie': self.spdb_cookies})
             jsonresponse = response.json()
