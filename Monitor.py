@@ -138,9 +138,8 @@ class Monitor:
         asyncio.ensure_future(self.display())
 
     async def main(self):
-        asyncio.ensure_future(self.spdb_test())
         asyncio.ensure_future(self.nbcb())
-        asyncio.ensure_future(self.spdb())
+        asyncio.ensure_future(self.spdb_test())
         asyncio.ensure_future(self.record())
         asyncio.ensure_future(self.reload())
         asyncio.ensure_future(self.display())
