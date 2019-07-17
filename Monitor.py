@@ -86,6 +86,8 @@ class Monitor:
     async def spdb_test(self):
         try:
             await self.spdb(test=True)
+            if not self.spdb_flag:
+                asyncio.ensure_future(self.spdb())
             self.spdb_flag = 1
         except:
             self.spdb_flag = 0
