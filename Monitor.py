@@ -35,12 +35,10 @@ class Monitor:
         self.log_interval = config.getint(
             'DEFAULT', 'log_interval', fallback=15)
         self.config_interval = config.getint(
-            'DEFAULT', 'config_interval', fallback=300)
+            'DEFAULT', 'config_interval', fallback=150)
         self.agent = config.get('DEFAULT', 'agent', fallback='Monitor')
         self.nbcb_interval = config.getint('nbcb', 'interval', fallback=7)
         self.spdb_interval = config.getint('spdb', 'interval', fallback=1)
-        self.spdb_test_interval = config.getint(
-            'spdb', 'test_interval', fallback=60)
         self.spdb_cookies = config.get('spdb', 'cookies', fallback='')
 
     async def nbcb(self):
@@ -92,7 +90,7 @@ class Monitor:
         except:
             self.spdb_flag = 0
             self.spdb_2301187111 = None
-        await asyncio.sleep(self.spdb_test_interval)
+        await asyncio.sleep(self.config_interval)
         asyncio.ensure_future(self.spdb_test())
 
     def markup(self, product, value):
