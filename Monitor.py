@@ -111,12 +111,12 @@ class Monitor:
         contents = []
         for i in products:
             if with_mark:
-                contents.append('{}-{}'.format(i[0], i[1]))
+                contents.append('{}-{:<15}'.format(i[0], i[1]))
             else:
-                contents.append('{}-{}'.format(i[0], i[1][:-1]))
+                contents.append('{}-{:<14}'.format(i[0], i[1][:-1]))
         output = ''
         for i in contents:
-            output += f'{i:<28}'
+            output += i
         return output
 
     async def record(self):
