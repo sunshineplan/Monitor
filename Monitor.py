@@ -111,9 +111,9 @@ class Monitor:
         contents = []
         for i in products:
             if with_mark:
-                contents.append('{}-{:<15}'.format(i[0], i[1]))
+                contents.append('{}-{:<13}'.format(i[0], i[1]))
             else:
-                contents.append('{}-{:<14}'.format(i[0], i[1][:-1]))
+                contents.append('{}-{:<12}'.format(i[0], i[1][:-1]))
         output = ''
         for i in contents:
             output += i
