@@ -130,6 +130,7 @@ class Monitor:
         asyncio.ensure_future(self.reload())
 
     async def display(self):
+        print('', end='\r')
         print('{:<21}{}'.format(datetime.now().strftime(
             '%Y-%m-%d %H:%M:%S'), self.formatter()), end='\r')
         await asyncio.sleep(1)
