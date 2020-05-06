@@ -48,77 +48,73 @@ class Monitor:
         self.spdb_cookies = config.get('spdb', 'cookies', fallback='')
 
     async def income(self):
-        headers = {'User-Agent': self.agent}
-        data = {'prodId': 1004, 'replyPage': 1}
-        try:
-            self.nbcb_1004_income = BeautifulSoup(requests.post('https://mybank.nbcb.com.cn/doorbank/queryNav.do',
-                                                                params=data, headers=headers).text, 'html.parser').find('td', class_='td4').text
-        except:
-            self.nbcb_1004_income = '-'
-        data = {'prodId': 1005, 'replyPage': 1}
-        try:
-            self.nbcb_1005_income = BeautifulSoup(requests.post('https://mybank.nbcb.com.cn/doorbank/queryNav.do',
-                                                                params=data, headers=headers).text, 'html.parser').find('td', class_='td4').text
-        except:
-            self.nbcb_1005_income = '-'
-        headers = {'Cookie': self.spdb_cookies}
-        data = {'FinanceNo': '2301187111',
-                'nearDate': 'nearOneWeek', 'Hierarchy': '2301187111-A'}
-        try:
-            self.spdb_2301187111_income = loads(requests.post('https://ebank.spdb.com.cn/msper-web-finance/QueryFinanceIncomeByAjax.json',
-                                                              json=data, headers=headers).json()['dataList'])[-1]
-        except:
-            self.spdb_2301187111_income = '-'
-        await asyncio.sleep(self.income_interval)
-        asyncio.ensure_future(self.income())
+        while True:
+            headers = {'User-Agent': self.agent}
+            data = {'prodId': 1004, 'replyPage': 1}
+            try:
+                self.nbcb_1004_income = BeautifulSoup(requests.post('https://mybank.nbcb.com.cn/doorbank/queryNav.do',
+                                                                    params=data, headers=headers).text, 'html.parser').find('td', class_='td4').text
+            except:
+                self.nbcb_1004_income = '-'
+            data = {'prodId': 1005, 'replyPage': 1}
+            try:
+                self.nbcb_1005_income = BeautifulSoup(requests.post('https://mybank.nbcb.com.cn/doorbank/queryNav.do',
+                                                                    params=data, headers=headers).text, 'html.parser').find('td', class_='td4').text
+            except:
+                self.nbcb_1005_income = '-'
+            headers = {'Cookie': self.spdb_cookies}
+            data = {'FinanceNo': '2301187111',
+                    'nearDate': 'nearOneWeek', 'Hierarchy': '2301187111-A'}
+            try:
+                self.spdb_2301187111_income = loads(requests.post('https://ebank.spdb.com.cn/msper-web-finance/QueryFinanceIncomeByAjax.json',
+                                                                  json=data, headers=headers).json()['dataList'])[-1]
+            except:
+                self.spdb_2301187111_income = '-'
+            await asyncio.sleep(self.income_interval)
 
     async def nbcb(self):
-        try:
-            headers = {'User-Agent': self.agent}
-            data = {'riskLevel': 2, 'isSelling': 1, 'orderType': 2,
-                    'investTerm': 4, 'TemplateCode': 9901, 'WEB_CHN': 'NH'}
-            limit = requests.post('https://e.nbcb.com.cn/perbank/HB06201_noSessionFinancialProds.do',
-                                  params=data, headers=headers, timeout=self.timeout).json()['cd']['iProdUseLimits']
-            for i in limit:
-                if i['prodId'] == '1004':
-                    self.nbcb_1004_limit = self.markup(
-                        self.nbcb_1004_limit, (f'天利鑫B({self.nbcb_1004_income})', i['totUseLimit']))
-                if i['prodId'] == '1005':
-                    self.nbcb_1005_limit = self.markup(
-                        self.nbcb_1005_limit, (f'如意鑫A({self.nbcb_1005_income})', i['totUseLimit']))
-        except:
-            self.nbcb_1004_limit = self.nbcb_1005_limit = None
-        await asyncio.sleep(self.nbcb_interval)
-        asyncio.ensure_future(self.nbcb())
+        while True:
+            try:
+                headers = {'User-Agent': self.agent}
+                data = {'riskLevel': 2, 'isSelling': 1, 'orderType': 2,
+                        'investTerm': 4, 'TemplateCode': 9901, 'WEB_CHN': 'NH'}
+                limit = requests.post('https://e.nbcb.com.cn/perbank/HB06201_noSessionFinancialProds.do',
+                                      params=data, headers=headers, timeout=self.timeout).json()['cd']['iProdUseLimits']
+                for i in limit:
+                    if i['prodId'] == '1004':
+                        self.nbcb_1004_limit = self.markup(
+                            self.nbcb_1004_limit, (f'天利鑫B({self.nbcb_1004_income})', i['totUseLimit']))
+                    if i['prodId'] == '1005':
+                        self.nbcb_1005_limit = self.markup(
+                            self.nbcb_1005_limit, (f'如意鑫A({self.nbcb_1005_income})', i['totUseLimit']))
+            except:
+                self.nbcb_1004_limit = self.nbcb_1005_limit = None
+            await asyncio.sleep(self.nbcb_interval)
 
-    async def spdb(self, test=False):
+    def _spdb(self, test=False):
         if test or self.spdb_flag:
             headers = {'Cookie': self.spdb_cookies}
             data = {'FinanceNo': '2301187111',
                     'nearDate': 'nearOneWeek', 'Hierarchy': '2301187111-A'}
             try:
                 limit = requests.post('https://ebank.spdb.com.cn/msper-web-finance/QueryAvlLimitAmnt.json',
-                                    json=data, headers=headers, timeout=self.timeout).json()['CanUseQuota'].replace(',', '')
+                                      json=data, headers=headers, timeout=self.timeout).json()['CanUseQuota'].replace(',', '')
                 if not test:
                     self.spdb_2301187111_limit = self.markup(
                         self.spdb_2301187111_limit, (f'天添盈增利1号({self.spdb_2301187111_income}%)', limit))
-                    await asyncio.sleep(self.spdb_interval)
-                    asyncio.ensure_future(self.spdb())
+                self.spdb_flag = 1
             except:
                 self.spdb_flag = 0
                 self.spdb_2301187111_limit = None
                 raise ValueError
 
-    async def spdb_test(self):
-        try:
-            await self.spdb(test=True)
-            if not self.spdb_flag:
-                asyncio.ensure_future(self.spdb())
-            self.spdb_flag = 1
-        except:
-            pass
-        await asyncio.sleep(self.config_interval)
-        asyncio.ensure_future(self.spdb_test())
+    async def spdb(self, interval, test=False):
+        while True:
+            try:
+                self._spdb()
+            except:
+                pass
+            await asyncio.sleep(self.spdb_interval)
 
     def markup(self, product, value):
         if not product:
@@ -139,47 +135,45 @@ class Monitor:
         contents = []
         for i in products:
             if with_mark:
-                contents.append('{}-{:<13}'.format(i[0], i[1]))
+                contents.append(f'{i[0]}-{i[1]:<13}')
             else:
-                contents.append('{}-{:<12}'.format(i[0], i[1][:-1]))
+                contents.append(f'{i[0]}-{i[1][:-1]:<12}')
         output = ''
         for i in contents:
             output += i
         return output
 
     async def record(self):
-        logger.info(self.formatter(with_mark=False))
-        await asyncio.sleep(self.log_interval)
-        asyncio.ensure_future(self.record())
+        while True:
+            logger.info(self.formatter(with_mark=False))
+            await asyncio.sleep(self.log_interval)
 
     async def reload(self):
-        self.parserconfig()
-        await asyncio.sleep(self.config_interval)
-        asyncio.ensure_future(self.reload())
+        while True:
+            self.parserconfig()
+            await asyncio.sleep(self.config_interval)
 
     async def display(self):
-        print('', end='\r')
-        print('{:<21}{}'.format(datetime.now().strftime(
-            '%Y-%m-%d %H:%M:%S'), self.formatter()), end='\r')
-        await asyncio.sleep(1)
-        asyncio.ensure_future(self.display())
+        while True:
+            now = f'{datetime.now():%Y-%m-%d %H:%M:%S}'
+            print('', end='\r')
+            print(f'{now:<21}{self.formatter()}', end='\r')
+            await asyncio.sleep(0.1)
 
     async def main(self):
-        asyncio.ensure_future(self.income())
-        asyncio.ensure_future(self.nbcb())
-        asyncio.ensure_future(self.spdb_test())
-        asyncio.ensure_future(self.record())
-        asyncio.ensure_future(self.reload())
-        asyncio.ensure_future(self.display())
+        await asyncio.gather(
+            self.income(),
+            self.nbcb(),
+            self.spdb(self.config_interval, test=True),
+            self.spdb(self.spdb_interval),
+            self.record(),
+            self.reload(),
+            self.display()
+        )
 
 
 if __name__ == '__main__':
-    logging.getLogger('asyncio').setLevel(logging.CRITICAL)
     try:
-        loop = asyncio.get_event_loop()
-        asyncio.ensure_future(Monitor().main())
-        loop.run_forever()
-    except:
-        loop.stop()
-    finally:
-        loop.close()
+        asyncio.run(Monitor().main())
+    except KeyboardInterrupt:
+        pass
