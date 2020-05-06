@@ -12,10 +12,15 @@ from logging.handlers import RotatingFileHandler
 import requests
 from bs4 import BeautifulSoup
 
+PATH = os.path.abspath(os.path.dirname(__file__))
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-handler = RotatingFileHandler(os.path.join(os.path.abspath(os.path.dirname(
-    __file__)), 'Monitor.log'), maxBytes=1*1024*1024, backupCount=10)
+handler = RotatingFileHandler(
+    os.path.join(PATH, 'Monitor.log'),
+    maxBytes=1*1024*1024,
+    backupCount=10
+)
 handler.setFormatter(logging.Formatter('%(asctime)s  %(message)s'))
 logger.addHandler(handler)
 
@@ -33,8 +38,7 @@ class Monitor:
 
     def parserconfig(self):
         config = configparser.ConfigParser()
-        config.read(os.path.join(os.path.abspath(
-            os.path.dirname(__file__)), 'Monitor.ini'))
+        config.read(os.path.join(PATH, 'Monitor.ini'))
         self.timeout = config.getint('DEFAULT', 'timeout', fallback=5)
         self.log_interval = config.getint(
             'DEFAULT', 'log_interval', fallback=15)
