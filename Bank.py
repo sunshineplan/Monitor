@@ -19,7 +19,7 @@ class Bank:
 
     def __str__(self):
         self.fetch()
-        return self.formatter(with_mark=True)
+        return self.formatter()
 
     def fetch(self):
         pass
@@ -27,16 +27,17 @@ class Bank:
     @staticmethod
     def markup(old, new):
         if old != '':
-            if float(old[:-1]) > new:
+            old = float(old.replace('↑', '').replace('↓', ''))
+            if old > new:
                 return f'{new}↓'
-            elif float(old[:-1]) < new:
+            elif old < new:
                 return f'{new}↑'
-        return f'{new}→'
+            else:
+                return f'{old}'
+        return f'{new}↑'
 
-    def formatter(self, with_mark=False):
-        if with_mark:
-            return f'{self.name}({self.income}) {self.limit:<13}'
-        return f'{self.name}({self.income}) {self.limit[:-1]:<12}'
+    def formatter(self):
+        return f'{self.name}({self.income}) {self.limit:<13}'
 
 
 class NBCB(Bank):
@@ -60,6 +61,7 @@ class NBCB(Bank):
 class Monitor:
     def __init__(self):
         self.tasks = []
+        self.content = ''
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
         handler = RotatingFileHandler(
@@ -71,25 +73,30 @@ class Monitor:
         handler.setFormatter(logging.Formatter('%(asctime)s  %(message)s'))
         self.logger.addHandler(handler)
 
-    def add(self, obj):
-        self.tasks.append(obj)
+    def add(self, *objs):
+        for obj in objs:
+            self.tasks.append(obj)
+
+    async def reload(self):
+        while True:
+            self.content = ''.join([str(i) for i in self.tasks])
+            await asyncio.sleep(1)
 
     async def record(self):
         while True:
-            content = [i.formatter() for i in self.tasks]
-            self.logger.info(''.join(content))
+            self.logger.info(self.content.replace('↑', '').replace('↓', ''))
             await asyncio.sleep(15)
 
     async def display(self):
         while True:
-            content = [str(i) for i in self.tasks]
             now = f'{datetime.now():%Y-%m-%d %H:%M:%S}'
             print('', end='\r')
-            print(f"{now:<21}{''.join(content)}", end='\r')
+            print(f'{now:<21}{self.content}', end='\r')
             await asyncio.sleep(0.1)
 
-    async def main(self):
+    async def run(self):
         await asyncio.gather(
+            self.reload(),
             self.display(),
             self.record(),
             return_exceptions=True
@@ -98,9 +105,8 @@ class Monitor:
 
 if __name__ == '__main__':
     m = Monitor()
-    m.add(NBCB('1005'))
-    m.add(NBCB('1004'))
+    m.add(NBCB('1005'), NBCB('1004'))
     try:
-        asyncio.run(m.main())
+        asyncio.run(m.run())
     except KeyboardInterrupt:
         pass
