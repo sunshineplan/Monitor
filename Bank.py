@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-import requests
+from aiohttp import ClientTimeout, request
 
 
 class Bank:
@@ -11,13 +11,6 @@ class Bank:
         self.income = 0
         self.limit = ''
         self.agent = 'Chrome'
-
-    def __str__(self):
-        self.fetch()
-        return self.formatter()
-
-    def fetch(self):
-        pass
 
     @staticmethod
     def markup(old, new):
@@ -43,11 +36,16 @@ class NBCB(Bank):
                         'User-Agent': self.agent}
         self.url = 'https://i.nbcb.com.cn/zhongtai/finance/prds/p-onsale-channel?turnPageBeginPos=1&turnPageShowNum=6&prdOrigin=0&prdClassify=0'
 
-    def fetch(self):
-        respone = requests.post(self.url, headers=self.headers).json()
-        for i in respone['body']['list']:
+    async def get(self):
+        try:
+            async with request('POST', self.url, headers=self.headers, timeout=ClientTimeout(total=3)) as response:
+                data = await response.json()
+        except:
+            return self.formatter()
+        for i in data['body']['list']:
             if i['prdCode'] == self.id:
                 self.name = i['prdName']
                 self.income = i['expectedRateShow']
                 self.limit = self.markup(self.limit, i['perUseLimit'])
                 break
+        return self.formatter()

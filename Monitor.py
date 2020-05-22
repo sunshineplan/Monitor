@@ -33,13 +33,14 @@ class Monitor:
 
     async def reload(self):
         while True:
-            self.content = ''.join([str(i) for i in self.tasks])
+            contents = await asyncio.gather(*[task.get() for task in self.tasks])
+            self.content = ''.join(contents)
             await asyncio.sleep(1)
 
     async def record(self):
         while True:
-            self.logger.info(self.content.replace('↑', ' ').replace('↓', ' '))
             await asyncio.sleep(15)
+            self.logger.info(self.content.replace('↑', ' ').replace('↓', ' '))
 
     async def display(self):
         while True:
@@ -53,7 +54,6 @@ class Monitor:
             self.reload(),
             self.display(),
             self.record(),
-            return_exceptions=True
         )
 
 
